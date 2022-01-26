@@ -12,7 +12,7 @@ const VALUES = process.argv.slice(3);
 * GET ATTRACTIONS FROM ALL TRIPS FROM CATEGORY: node index.mjs category-attractions <category>
 */
 
-const funcObj = {
+const queryDb = {
   create: (input) => {
     db.Trip.create({
       name: input[0],
@@ -20,8 +20,8 @@ const funcObj = {
       updated_at: Date.now(),
     })
       .then((trip) => {
-        console.log('trip created!');
-        console.log(trip);
+        console.log(`new trip created! \n trip name: ${trip.name} \n trip id: ${trip.id}`);
+        db.sequelize.close();
       })
       .catch((error) => console.log(error));
   },
@@ -36,21 +36,20 @@ const funcObj = {
         updated_at: Date.now(),
         categoryId: retCty.id,
       }))
-      .then((retAttr) => {
-        console.log('attraction added to trip!');
-        console.log('attraction id:', retAttr.id);
-        console.log('trip id of attraction:', retAttr.tripId);
-        console.log('category id of attraction:', retAttr.categoryId);
+      .then((attraction) => {
+        console.log(`attraction added to trip! \n attraction id: ${attraction.id} \n trip id: ${attraction.tripId} \n category id: ${attraction.categoryId}`);
+        db.sequelize.close();
       })
       .catch((error) => console.log(error));
   },
   trip: (input) => {
     db.Trip.findOne({ where: { name: input[0] } })
       .then((retTrip) => retTrip.getAttractions())
-      .then((attractions) => console.log(attractions.map((attraction) => attraction.name)))
-      .catch((error) => {
-        console.log(error);
-      });
+      .then((attractions) => {
+        console.log(attractions.map((attraction) => attraction.name));
+        db.sequelize.close();
+      })
+      .catch((error) => console.log(error));
   },
   'add-category': (input) => {
     db.Category.create({
@@ -59,8 +58,8 @@ const funcObj = {
       updated_at: Date.now(),
     })
       .then((category) => {
-        console.log('category created!');
-        console.log(category);
+        console.log(`new category created! \n category name: ${category.name} \n category id: ${category.id}`);
+        db.sequelize.close();
       })
       .catch((error) => console.log(error));
   },
@@ -69,20 +68,26 @@ const funcObj = {
     const getCty = db.Category.findOne({ where: { name: input[1] } });
     Promise.all([getTrip, getCty])
       .then(([retTrip, retCty]) => retTrip.getAttractions({ where: { categoryId: retCty.id } }))
-      .then((attractions) => console.log(attractions.map((attraction) => attraction.name)))
+      .then((attractions) => {
+        console.log(attractions.map((attraction) => attraction.name));
+        db.sequelize.close();
+      })
       .catch((error) => console.log(error));
   },
   'category-attractions': (input) => {
     db.Category.findOne({ where: { name: input[0] } })
       .then((category) => category.getAttractions())
-      .then((attractions) => console.log(attractions.map((attraction) => attraction.name)))
+      .then((attractions) => {
+        console.log(attractions.map((attraction) => attraction.name));
+        db.sequelize.close();
+      })
       .catch((error) => console.log(error));
   },
 };
 
-if (!(COMMAND in funcObj)) {
+if (!(COMMAND in queryDb)) {
   console.log('invalid command!');
   process.exit();
 }
 
-funcObj[COMMAND](VALUES);
+queryDb[COMMAND](VALUES);
