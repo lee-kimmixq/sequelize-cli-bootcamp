@@ -22,29 +22,16 @@ const funcObj = {
       .then((trip) => {
         console.log('trip created!');
         console.log(trip);
-        db.sequelize.close();
       })
       .catch((error) => console.log(error));
   },
   'add-attrac': (input) => {
-    // CAN SIMPLIFY????
-    let retTripId;
-    db.Trip.findOne({
-      where: {
-        name: input[0],
-      },
-    })
-      .then((retTrip) => {
-        retTripId = retTrip.id;
-        return db.Category.findOne({
-          where: {
-            name: input[2],
-          },
-        });
-      })
-      .then((retCty) => db.Attraction.create({
+    const getTrip = db.Trip.findOne({ where: { name: input[0] } });
+    const getCty = db.Category.findOne({ where: { name: input[2] } });
+    Promise.all([getTrip, getCty])
+      .then(([retTrip, retCty]) => db.Attraction.create({
         name: input[1],
-        tripId: retTripId,
+        tripId: retTrip.id,
         created_at: Date.now(),
         updated_at: Date.now(),
         categoryId: retCty.id,
@@ -55,16 +42,10 @@ const funcObj = {
         console.log('trip id of attraction:', retAttr.tripId);
         console.log('category id of attraction:', retAttr.categoryId);
       })
-      .catch((error) => {
-        console.log(error);
-      });
+      .catch((error) => console.log(error));
   },
   trip: (input) => {
-    db.Trip.findOne({
-      where: {
-        name: input[0],
-      },
-    })
+    db.Trip.findOne({ where: { name: input[0] } })
       .then((retTrip) => retTrip.getAttractions())
       .then((attractions) => console.log(attractions.map((attraction) => attraction.name)))
       .catch((error) => {
@@ -80,24 +61,22 @@ const funcObj = {
       .then((category) => {
         console.log('category created!');
         console.log(category);
-        db.sequelize.close();
       })
       .catch((error) => console.log(error));
   },
   'category-trip': (input) => {
-    db.Trip.findOne({
-      where: {
-        name: input[0],
-      },
-    })
-      .then((retTrip) => retTrip.getAttractions({
-        where: {
-          // TODO
-        },
-      }))
-      .catch((error) => {
-        console.log(error);
-      });
+    const getTrip = db.Trip.findOne({ where: { name: input[0] } });
+    const getCty = db.Category.findOne({ where: { name: input[1] } });
+    Promise.all([getTrip, getCty])
+      .then(([retTrip, retCty]) => retTrip.getAttractions({ where: { categoryId: retCty.id } }))
+      .then((attractions) => console.log(attractions.map((attraction) => attraction.name)))
+      .catch((error) => console.log(error));
+  },
+  'category-attractions': (input) => {
+    db.Category.findOne({ where: { name: input[0] } })
+      .then((category) => category.getAttractions())
+      .then((attractions) => console.log(attractions.map((attraction) => attraction.name)))
+      .catch((error) => console.log(error));
   },
 };
 
