@@ -32,6 +32,12 @@ export default function initAttractionModel(sequelize, DataTypes) {
           key: 'id',
         },
       },
+      latitude: {
+        type: DataTypes.FLOAT,
+      },
+      longitude: {
+        type: DataTypes.FLOAT,
+      },
     },
     {
       underscored: true,
